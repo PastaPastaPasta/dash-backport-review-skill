@@ -56,7 +56,16 @@ MARKER = re.compile(
     r"|\bMerge\s+#\s*(?P<plainnum>\d+)\b"
     r")"
 )
-FOLLOWUP = re.compile(r"(?i)\b(follow[- ]?up|fix[- ]?up|followup for|amend|address\s+review)\b")
+# A subject CLAIMS a backport only in these shapes:
+#   "Merge bitcoin/bitcoin#N: ..." / "partial Merge #N: ..."
+#   "backport: bitcoin#N ..." / "backport: partial bitcoin#N ..."
+# Prose mentions ("follow-up for bitcoin#N", "Dash adaptations for bitcoin#N",
+# "remove make-up code from backport bitcoin#N") are references: the upstream
+# PR is expected in history, not landed by this commit.
+BACKPORT_SUBJECT = re.compile(
+    r"(?i)^\s*(?:(?:partial\s+)?merge\b"
+    r"|backport\s*!?:\s*(?:partial\s+)?(?:merge\s+)?(?:bitcoin|bitcoin-core/gui|#\d))"
+)
 PARTIAL = re.compile(r"(?i)\bpartial\b")
 
 
@@ -64,10 +73,10 @@ def parse_markers(subject):
     """Return list of {repo, num, kind, partial} parsed from a commit subject.
 
     kind 'backport': this commit claims to land the upstream PR.
-    kind 'reference': a follow-up/fix that only mentions it — the upstream PR
-    is expected to already be present at the PR base.
+    kind 'reference': the subject only mentions it — the upstream PR is
+    expected to already be present at the PR base.
     """
-    is_followup = bool(FOLLOWUP.search(subject))
+    is_claim = bool(BACKPORT_SUBJECT.match(subject))
     is_partial = bool(PARTIAL.search(subject))
     out = []
     for m in MARKER.finditer(subject):
@@ -79,7 +88,7 @@ def parse_markers(subject):
             repo, num = DEFAULT_UPSTREAM, int(m.group("plainnum"))
         out.append({
             "repo": repo, "num": num,
-            "kind": "reference" if is_followup else "backport",
+            "kind": "backport" if is_claim else "reference",
             "partial": is_partial,
         })
     return out
@@ -577,7 +586,7 @@ def main():
         sha = find_upstream_merge(mk["repo"], mk["num"])
         if sha:
             ref = f"refs/backport-check/{mk['repo'].replace('/', '_')}-{mk['num']}"
-            fr = git("fetch", "--quiet", f"https://github.com/{mk['repo']}.git",
+            fr = git("fetch", "--quiet", "--depth=2", f"https://github.com/{mk['repo']}.git",
                      f"{sha}:{ref}", check=False)
             if fr.returncode == 0:
                 resolved[key] = ref

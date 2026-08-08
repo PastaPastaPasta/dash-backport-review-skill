@@ -214,3 +214,37 @@ alternate, premium-tier (sol-class) spot-check on consensus-path PRs or every
 Nth review. A truly clean-PR run (PR absent from this repo) remains the ideal
 confirmation, but composer contradicting-and-correcting the answer key while
 holding severities is the strongest signal available short of that.
+
+## Validation round 8 (2026-08-07, clean-PR eval on #7525 — final model decision)
+
+First eval on a PR absent from this repo (#7525, kernel-3 batch, script verdict
+BLOCK from a HIGH getmempoolinfo finding). Ground truth verified in-tree:
+the BLOCK is a false positive — the "missing" incrementalrelayfee field comes
+from bitcoin#25439, which Dash never backported (not a hole in #25648); the
+two fields Dash has are correctly rewired to pool.m_*. Feefilter is genuinely
+absent from Dash net_processing (Dash-N/A). The non-marker cleanup commit
+83ba97c4a83 correctly removes #26933 makeup (backported earlier via #7237 /
+0d8920cb407, sha verified) that referenced the ::minRelayTxFee global removed
+in this PR.
+
+- **Composer**: correct verdict with the sharpest causal resolution (traced
+  the HIGH finding to un-backported 25439 — prerequisite-graph reasoning),
+  all N/As verified, noted merged status and thin PR body. Third consecutive
+  strong round; first on a clean PR. Selected as primary.
+- **Muse**: correct on everything with verified per-item citations; slightly
+  less precise on the HIGH finding's origin but adds useful behavioral
+  evidence (m_incremental_relay_feerate stored and used for eviction).
+  Alternate.
+- **Gemini**: accurate content (shas spot-checked) but zero engagement with
+  the script's findings — never mentions the BLOCK or resolves the HIGH
+  finding, no severity ranking. APPROVE-by-summary is the wholesale-dismissal
+  anti-pattern even when the conclusion is right. Out.
+
+Eval also exposed a script bug, now fixed: "remove make-up code from backport
+bitcoin#N" was classified as a backport CLAIM for N (bogus 26933 section,
+muse called it "mis-mapped"). Claims are now only Merge-style or
+"backport: [partial] bitcoin#N" subjects; all other marker mentions are
+references checked against history.
+
+Final rotation: composer primary, muse alternate, sol-class spot-check on
+consensus-path PRs; gemini and deepseek out.
