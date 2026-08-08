@@ -112,3 +112,26 @@ with an "N expectation line(s) superseded" note per section. Ordering matters:
 an unordered version masked 26699's deletion of the wallet_create_tx
 GetAvailableBalance line (25685 — earlier — had added it); supersession only
 flows from later PRs in the Dash commit sequence.
+
+## Validation round 4 (2026-08-07, five-model eval on #7479)
+
+Five models ran the skill on #7479 against known ground truth. All five got
+the mechanical layer right (UNDECLARED_PARTIAL, coverage tables, rename and
+supersession annotations) — the script successfully floor-raised every model.
+They diverged only on the judgment call: is the PR-body justification for the
+dropped watch-only PSBT test sufficient?
+
+- Correct (checked the tree for the user-visible behavior before ruling):
+  Sonnet-class "5.6 sol", deepseek flash — the latter also found the sharpest
+  framing: the body justifies the *test* omission but never declares the
+  *behavior commit* (cd98b717398) omission; separate declarations.
+- Incorrect: gemini flash accepted the body at face value; muse spark quoted
+  the resolution protocol and then asserted "behavior unneeded" without
+  evidence; compose fast declared "APPROVE with nits" and dismissed
+  buildability.
+
+Lessons encoded in SKILL.md: evidence requirement (enumerate + cite each
+capability before any N/A on a dropped test), UNDECLARED_PARTIAL never a nit,
+no local paths in reports, no attribution footer off-GitHub, don't accept
+author claims as verification. Detail volume anti-correlated with verdict
+quality: the two longest reports had the worst verdicts.

@@ -105,6 +105,19 @@ individually resolved into exactly one of:
    inapplicability is NOT sufficient: if the user-visible behavior exists in
    Dash, the behavior needs an adapted test or an explicit justification for
    remaining untested.
+
+   **Evidence requirement for N/A on a dropped test** — you may not assert
+   "behavior unneeded in Dash"; you must show it. Enumerate each user-visible
+   capability the test exercises (e.g. legacy watch-only wallet, unsigned tx
+   creation, PSBT presentation, clipboard export), and for each, cite the
+   Dash file that proves it exists or is absent. If ANY capability exists,
+   the resolution is "adapt the test" or "explicit untested-behavior
+   justification" — never plain N/A. A PR-body justification that addresses
+   implementation inapplicability does not cover behavior; check whether the
+   body also declares any omitted *behavior* commits — test omission and
+   behavior-commit omission are separate declarations. (In a five-model eval
+   of this exact call, every model that skipped the enumeration got it wrong,
+   including one that quoted this rule and then asserted its way past it.)
 3. **Genuinely omitted** — then it must be declared (`partial` subject and/or
    PR-body justification). Undeclared omission = finding to report. If a
    justification exists, check that it actually covers this omission, not
@@ -144,6 +157,20 @@ Report findings with file/hunk references and your adaptation-vs-drop
 judgement per item. Never claim the backport is faithful based on verdict
 `APPROVE` alone if the PR also contains non-marker commits — review those
 separately as ordinary Dash changes.
+
+## Report hygiene
+
+- Lead with the verdict and blockers; rank findings by severity. Do not bury
+  a blocker under per-file narration — a short, ranked report beats a long
+  exhaustive one.
+- `UNDECLARED_PARTIAL` is never a "nit": provenance metadata is a merge
+  requirement in Dash convention. Do not soften it into "APPROVE with nits".
+- Reference files by repo-relative path or GitHub URL at the head SHA —
+  never local filesystem paths (worktree paths leak and break when posted).
+- Do not accept author/PR-body claims (e.g. "benchmarks pass", "test is
+  upstream-only") as verification; verify in the tree or say you didn't.
+- AI-attribution footers belong only on content actually posted to GitHub,
+  never on terminal reports.
 
 ## Known limits
 
