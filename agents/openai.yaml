@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backport PR Codereview"
+  short_description: "Review Dash backport PRs against upstream Bitcoin PRs"
+  default_prompt: "Run $backport-pr-codereview on a PR number and return full upstream-parity analysis for all mapped merge commits with review justification and decision breakdown."
