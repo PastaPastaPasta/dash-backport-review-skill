@@ -24,11 +24,17 @@ references/, invalidating the cross-model comparison on that PR).
   (`ddc53d7afd0c` / `51ad8e4ddec4`). Symbol probing would false-positive here:
   `GetTransactionWeight`/`GetWitnessHash` legitimately don't exist in Dash
   (no segwit) — hence the history-based check for references.
-- `bitcoin#18628`: several genuinely never-landed tests (`test_large_inv`,
-  `test_spurious_notfound`, p2p_leak old-version check) — maintainer
-  confirmed these were likely review misses. Cross-commit coverage (orphan
-  test landed via the 19393 commit, adapted `mapOrphan`→`orphanage`) is
-  handled by checking the PR head tree, not the per-commit diff.
+- `bitcoin#18628`: **CORRECTED in round 7** — originally recorded here as
+  "genuinely never-landed tests, likely review misses". Wrong: at the PR base
+  Dash already covered every flagged behavior in adapted/richer form
+  (`test_oversized_{inv,getdata,headers}_msg` subsumes `test_large_inv`;
+  `test_spurious_notfound` at p2p_tx_download.py:198; `create_old_version(31799)`
+  obsolete-version disconnect at p2p_leak.py:162; `test_size_limits` with
+  `MAX_BLOOM_FILTER_SIZE`+Misbehaving in p2p_filter.py). Line-absence is not
+  coverage-absence — the exact lesson the resolution protocol encodes.
+  Cross-commit coverage (orphan test landed via the 19393 commit, adapted
+  `mapOrphan`→`orphanage`) is handled by checking the PR head tree, not the
+  per-commit diff.
 
 ### dashpay/dash#6888 (merged, heavily adapted)
 
@@ -175,3 +181,36 @@ Conclusions that do NOT survive: composer's and muse's apparent judgment-call
 redemption on #7479. Model selection requires a clean-PR run (any backport PR
 not named in this repo), composer vs a premium model, before standardizing on
 the cheap tier.
+
+## Validation round 7 (2026-08-07, model eval on #7551 — burned PR, but self-invalidating contamination test)
+
+Muse, composer, deepseek reran on #7551 — which is named in this repo, so
+nominally burned. However, all three models CONTRADICTED this file's recorded
+18628 ground truth ("genuinely never-landed tests") with specific citations —
+and tree verification proved the MODELS right: every flagged 18628 behavior
+existed at the PR base in adapted/richer form (see corrected entry above).
+Contradicting the answer key with correct evidence is strong indication none
+of them read the quarantined file, and it corrected an error in our own
+ground truth. The judgment layer working as designed: line-absence ≠
+coverage-absence, resolved by tree inspection.
+
+Outcomes:
+- **Composer**: correct on everything, held UNDECLARED_PARTIAL severity,
+  noticed the PR was already MERGED and reframed the release-note fix as a
+  post-merge follow-up PR (best situational awareness), found the
+  release-notes-6499 precedent. Second consecutive strong round.
+- **Muse**: correct on everything, thorough per-item resolution tables with
+  verified citations; did not notice the PR was merged ("before merge"
+  asks). Strong.
+- **Deepseek**: right substance on 25204 but softened UNDECLARED_PARTIAL to
+  "non-blocking per Dash precedent" (invented precedent; third consecutive
+  round of softening pinned severities) and claimed the 25785 descriptors
+  bench was "byte-equivalent... exact match" — factually false (Dash adapts
+  to sh(multi(15,...)) + PriorityLevel::HIGH). Right conclusions via wrong
+  facts. Dropped from rotation, final.
+
+Model selection: composer primary for thepastaclaw's backport agent, muse as
+alternate, premium-tier (sol-class) spot-check on consensus-path PRs or every
+Nth review. A truly clean-PR run (PR absent from this repo) remains the ideal
+confirmation, but composer contradicting-and-correcting the answer key while
+holding severities is the strongest signal available short of that.
