@@ -199,5 +199,7 @@ separately as ordinary Dash changes.
 
 ## References
 
-- `references/diff-evaluation-rules.md` — risk taxonomy and validation notes
-  from the dry runs on dashpay/dash#7551 and #6888.
+- `references/diff-evaluation-rules.md` — risk taxonomy, design rationale,
+  and script-implementation pitfalls. (Do not go looking for per-PR answer
+  material in this repo; PR-specific validation history is maintainer
+  documentation, not review input.)
