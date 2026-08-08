@@ -374,6 +374,44 @@ def file_class(path):
     return "OTHER", "LOW"
 
 
+def late_adaptation_findings(pr_commits):
+    """Detect adaptation commits that rewrite code introduced by an earlier
+    commit in the same PR, more than one position back.
+
+    Such a stack usually means the intermediate commits do not build (the
+    adaptation fixes compile errors the earlier backport introduced). Per the
+    atomic-commit rule the fix belongs folded into the earlier commit or
+    immediately after it — or the non-building range must be declared.
+    Proper `Merge`/`partial Merge` backport commits are exempt: later upstream
+    PRs legitimately rewrite earlier ones when stacked.
+    """
+    per_adds = []
+    findings = []
+    for i, (oid, subj) in enumerate(pr_commits):
+        files = parse_diff_files(git("show", "--format=", oid, check=False).stdout)
+        adds, dels = set(), set()
+        for hunks in files.values():
+            a, d = file_expectations(hunks)
+            adds.update(x for x in a if len(x) >= 12)
+            dels.update(x for x in d if len(x) >= 12)
+        if not re.match(r"(?i)\s*(partial\s+)?merge\b", subj):
+            # distance 1 (immediately after) is acceptable convention; anything
+            # further back leaves non-building commits in between. Even a
+            # single rewritten line matters — the canonical case is a one-line
+            # signature/compile fix.
+            for j in range(0, i - 1):
+                overlap = dels & per_adds[j]
+                if len(overlap) >= 1:
+                    findings.append({
+                        "commit": oid[:11], "subject": subj[:80],
+                        "fixes_commit": pr_commits[j][0][:11],
+                        "fixes_subject": pr_commits[j][1][:80],
+                        "distance": i - j, "overlap_lines": len(overlap),
+                        "sample": sorted(overlap)[:3]})
+        per_adds.append(adds)
+    return findings
+
+
 def prereq_hint(missing_line, search_refs):
     """Best-effort: which fetched upstream commit introduced a missing line."""
     token = missing_line.strip()[:60]
@@ -420,6 +458,19 @@ def emit_markdown(result):
         lines.append("- commits without upstream markers: "
                      + ", ".join(result["non_marker_commits"]))
     lines.append("")
+    if result.get("stack_findings"):
+        lines.append("## Commit stack (bisectability)")
+        for sf in result["stack_findings"]:
+            lines.append(
+                f"- **LATE_ADAPTATION** `{sf['commit']}` ({sf['subject']}) rewrites "
+                f"{sf['overlap_lines']} line(s) introduced by `{sf['fixes_commit']}` "
+                f"({sf['fixes_subject']}), {sf['distance']} commits earlier — the "
+                "intermediate commits likely do not build. Fold the fix into the "
+                "earlier commit, move it immediately after, or declare the "
+                "non-building range explicitly (atomic-commit rule).")
+            for s in sf["sample"]:
+                lines.append(f"    - e.g. `{s[:110]}`")
+        lines.append("")
     for e in result["report"]:
         kind = e["kind"] + (" (declared partial)" if e["partial"] else "")
         lines.append(f"## {e['upstream']} — {kind}")
@@ -507,6 +558,9 @@ def main():
             g["partial"] = g["partial"] or mk["partial"]
             g["commits"].append((c["oid"][:11], subj))
     mappings = [(g, g["commits"][0][0], g["commits"][0][1]) for g in groups.values()]
+
+    stack_findings = late_adaptation_findings(
+        [(c["oid"], c["messageHeadline"]) for c in pr["commits"]])
 
     # stale-metadata check: markers in the PR title must appear in some commit
     title_markers = {(m["repo"], m["num"]) for m in parse_markers(pr["title"])}
@@ -655,8 +709,11 @@ def main():
     result = {"repo": args.repo, "pr": args.pr_number, "head": head[:11],
               "merge_base": merge_base[:11], "report": report,
               "non_marker_commits": non_marker,
-              "title_markers_missing_in_commits": stale}
+              "title_markers_missing_in_commits": stale,
+              "stack_findings": stack_findings}
     result["verdict"] = verdict_for(report)
+    if stack_findings and result["verdict"] == "APPROVE":
+        result["verdict"] = "REQUIRES_REVIEW"
 
     if not args.keep_refs:
         for ref in fetched_refs:

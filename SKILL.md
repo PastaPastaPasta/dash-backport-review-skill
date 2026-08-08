@@ -59,6 +59,14 @@ moved lines cancel even across hunks):
   `Merge`. Per Dash convention the subject should say `partial Merge …` and
   every omission must be documented. This is the finding reviews most often
   miss — never wave it off.
+- `LATE_ADAPTATION` (in the "Commit stack" section) — a non-`Merge` commit
+  rewrites a line introduced by a commit more than one position earlier in
+  the same PR. The intermediate commits likely do not build (the canonical
+  case is a one-line signature/compile fix landing at the end of the stack).
+  Resolution: fold the fix into the earlier commit, move it immediately
+  after, or have the PR declare the non-building range explicitly
+  (atomic-commit rule). Always carry this into your report — in a model eval,
+  every reviewer dropped this finding once it was no longer script-emitted.
 
 Findings may carry annotations that resolve common false positives for you:
 
@@ -110,14 +118,21 @@ individually resolved into exactly one of:
    "behavior unneeded in Dash"; you must show it. Enumerate each user-visible
    capability the test exercises (e.g. legacy watch-only wallet, unsigned tx
    creation, PSBT presentation, clipboard export), and for each, cite the
-   Dash file that proves it exists or is absent. If ANY capability exists,
-   the resolution is "adapt the test" or "explicit untested-behavior
-   justification" — never plain N/A. A PR-body justification that addresses
+   Dash file that proves it exists or is absent. **The enumeration table must
+   appear in your report** — YOU perform it against the tree; deferring to
+   the PR body's claim that it "covers this at a high level" is not
+   performing it. If ANY capability exists, the resolution is "adapt the
+   test" or "explicit untested-behavior justification" — never plain N/A, and
+   the finding is a **required action, not optional**: a test dropped while
+   its behavior exists in Dash always demands either the adapted test or the
+   explicit justification before ACK. A PR-body justification that addresses
    implementation inapplicability does not cover behavior; check whether the
    body also declares any omitted *behavior* commits — test omission and
-   behavior-commit omission are separate declarations. (In a five-model eval
-   of this exact call, every model that skipped the enumeration got it wrong,
-   including one that quoted this rule and then asserted its way past it.)
+   behavior-commit omission are separate declarations. (In model evals of
+   this exact call: every model that skipped the enumeration got it wrong;
+   one quoted this rule and asserted its way past it; another performed the
+   enumeration, reached the right conclusion, then still labeled the finding
+   "optional". Neither shortcut is acceptable.)
 3. **Genuinely omitted** — then it must be declared (`partial` subject and/or
    PR-body justification). Undeclared omission = finding to report. If a
    justification exists, check that it actually covers this omission, not

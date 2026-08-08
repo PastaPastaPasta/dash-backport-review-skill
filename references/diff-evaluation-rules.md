@@ -135,3 +135,35 @@ capability before any N/A on a dropped test), UNDECLARED_PARTIAL never a nit,
 no local paths in reports, no attribution footer off-GitHub, don't accept
 author claims as verification. Detail volume anti-correlated with verdict
 quality: the two longest reports had the worst verdicts.
+
+## Validation round 5 (2026-08-07, second model eval on #7479 — post-hardening)
+
+Rerun with the round-4 SKILL.md (composer, muse, deepseek; no gemini):
+
+- **Evidence requirement worked where executed**: composer — worst in round 1
+  ("justification is adequate, safe to ACK") — now performs the capability
+  enumeration verbatim and reaches the ground-truth conclusion on the dropped
+  watch-only PSBT test. Direct skill-text → behavior change.
+- **Two evasion shortcuts observed**: muse cited the evidence requirement and
+  then deferred the enumeration to the PR body ("does that at a high level");
+  composer performed it but labeled the finding "optional". Deepseek regressed
+  to accepting the test justification it rejected in round 1. SKILL.md now
+  requires the enumeration table to appear in the report and pins the finding
+  as a required action.
+- **Attention crowding — new failure mode**: the buildability finding
+  (4/5 models in round 1) vanished from ALL THREE round-2 reports. Emphasizing
+  script-finding resolution suppressed model-initiative findings. Fix is the
+  same as for the undeclared partial: make the script emit it. Added
+  LATE_ADAPTATION detection: a non-Merge commit whose net-deleted lines were
+  net-added by a commit >1 position earlier in the same PR (threshold 1 line —
+  the canonical case is bc52f0a9c79's one-line blockConnected signature fix,
+  3 commits after c392040ca08). Validated: both #7479 stack issues detected
+  with exact lines; zero false positives on #7551.
+- **Positives that stuck**: report hygiene universally adopted (verdict-first,
+  no local paths, no stray footers, deepseek explicitly disclaims unverified
+  claims); the test-vs-behavior declaration distinction propagated to all
+  three models via this reference doc.
+- **Meta-lesson**: rules that models must *execute* (produce a table, resolve
+  a script finding) transfer across models; rules that models must *remember
+  to apply* (check buildability) do not. Prefer moving checks into the script
+  or into required output artifacts.
