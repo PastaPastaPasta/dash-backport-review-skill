@@ -85,7 +85,11 @@ Alignment guidance for the bot's prompt:
 
 ## Provenance
 
-`references/diff-evaluation-rules.md` records the design rationale and three
-validation rounds against merged Dash PRs (#6888, #7551, #7479), including
-the failure post-mortems that shaped the current design. Treat those cases as
-regression tests when modifying the script.
+`references/diff-evaluation-rules.md` holds the design rationale, risk
+taxonomy, and script-implementation pitfalls. PR-specific validation history
+(ground truth from dry runs on dashpay/dash #6888, #7551, #7479) lives in
+`docs/validation-history.md`, deliberately outside `references/`: agents read
+`references/` at review time, and PR-specific findings there hand the
+reviewer an answer key. Treat the documented cases as regression tests when
+modifying the script — and **never evaluate models on a PR named anywhere in
+this repo**; those PRs are burned.
