@@ -1,6 +1,6 @@
 ---
 name: backport-pr-codereview
-description: Review a Dash backport PR against its upstream Bitcoin PRs — verify every upstream hunk landed, catch dropped content and missing prerequisites, and classify review risk.
+description: Review a Dash Core backport PR against its upstream Bitcoin Core PRs to verify every hunk landed, catch missing prerequisites, and classify risk. Use when reviewing or auditing a Dash PR that backports upstream Bitcoin commits.
 ---
 
 # Backport PR Codereview
